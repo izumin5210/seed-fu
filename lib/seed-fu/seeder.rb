@@ -62,8 +62,6 @@ module SeedFu
         record = find_or_initialize_record(data)
         return if @options[:insert_only] && !record.new_record?
 
-        puts " - #{@model_class} #{data.inspect}" unless @options[:quiet]
-
         # Rails 3 or Rails 4 + rails/protected_attributes
         if record.class.respond_to?(:protected_attributes) && record.class.respond_to?(:accessible_attributes)
           record.assign_attributes(data,  :without_protection => true)
@@ -71,6 +69,15 @@ module SeedFu
         else
           record.assign_attributes(data)
         end
+
+        msg = case
+              when !record.persisted? then "Created"
+              when record.changed? then "Updated"
+              else "Skipped"
+              end
+
+        puts " - #{msg} #{@model_class} #{data.inspect}" unless @options[:quiet]
+
         record.save(:validate => false) || raise(ActiveRecord::RecordNotSaved, 'Record not saved!')
         record
       end
